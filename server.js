@@ -4,7 +4,6 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
-// const MongoStore = require("connect-mongo");
 const MongoStore = require("connect-mongo").default;
 const passport = require("./config/passport");
 
@@ -37,8 +36,7 @@ if (!process.env.MONGO_URI) {
   throw new Error("MONGO_URI is missing from environment configuration.");
 }
 
-// Required when deployed behind a trusted reverse proxy using HTTPS.
-// Configure this according to your hosting platform.
+// Trust Render's reverse proxy in production
 if (isProduction) {
   app.set("trust proxy", 1);
 }
@@ -71,7 +69,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: isProduction,
-      sameSite: "lax",
+      sameSite: isProduction ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 8,
     },
   })
