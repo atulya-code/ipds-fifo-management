@@ -24,10 +24,14 @@ const requireAssignedGodown = (req, res, next) => {
     });
   }
 
+  // const requestedGodownId =
+  //   req.params.godownId ||
+  //   req.body.godown ||
+  //   req.query.godownId;
   const requestedGodownId =
-    req.params.godownId ||
-    req.body.godown ||
-    req.query.godownId;
+  req.params?.godownId ||
+  req.body?.godown ||
+  req.query?.godownId;
 
   // If route doesn't specify a godown, attach the user's assigned godown.
   if (!requestedGodownId) {

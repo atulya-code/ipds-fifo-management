@@ -4,7 +4,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
-const MongoStore = require("connect-mongo");
+// const MongoStore = require("connect-mongo");
+const MongoStore = require("connect-mongo").default;
 const passport = require("./config/passport");
 
 const connectDB = require("./config/db");
@@ -14,6 +15,7 @@ const challanRoutes = require("./routes/challanRoutes");
 const adjustmentRoutes = require("./routes/adjustmentRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const movementRoutes = require("./routes/movementRoutes");
+const referenceRoutes = require("./routes/referenceRoutes");
 
 const app = express();
 
@@ -115,6 +117,7 @@ app.use("/api/challans", challanRoutes);
 app.use("/api/adjustments", adjustmentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/movements", movementRoutes);
+app.use("/api/reference", referenceRoutes);
 
 // Connect database before starting server
 connectDB()

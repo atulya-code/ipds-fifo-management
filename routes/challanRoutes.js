@@ -1,13 +1,16 @@
 
 const express = require("express");
 
+
+
 const {
+  getChallans, // NEW
   createChallan,
   approveChallan,
   dispatchChallan,
   deliverChallan,
   requestChallanException,
-   reviewChallanException,
+  reviewChallanException,
 } = require("../controllers/challanController");
 
 const {
@@ -19,6 +22,12 @@ const { requireAssignedGodown } = require("../Middleware/godownAccess");
 
 const router = express.Router();
 
+router.get(
+  "/",
+  isAuthenticated,
+  authorizeRoles("admin", "godown_manager", "operator", "approver"),
+  getChallans
+); 
 router.post(
   "/",
   isAuthenticated,

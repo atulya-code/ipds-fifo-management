@@ -149,6 +149,7 @@ const getStockMovements = async (req, res) => {
       StockMovement.find(filter)
         .populate("batch", "batchNumber")
         .populate("commodity", "name")
+        .populate("godown", "name godownName")
         .populate("performedBy", "name email")
         .populate("challan", "challanNumber status")
         .sort({ createdAt: -1, _id: -1 })

@@ -9,10 +9,56 @@ const Godown = require("../models/Godown");
 const FPS = require("../models/FPS");
 const { allocateFIFO } = require("../services/fifoServices");
 
+
+
+
+const getChallans = async (req, res) => {
+  try {
+    const filter = {};
+
+    // Non-admin users can only see challans for their assigned godown.
+    if (req.user.role !== "admin") {
+      if (!req.user.assignedGodown) {
+        return res.status(403).json({
+          success: false,
+          message: "No godown is assigned to your account",
+        });
+      }
+
+      filter.godown = req.user.assignedGodown;
+    }
+
+    const challans = await DeliveryChallan.find(filter)
+      .populate("godown", "name godownName")
+      .populate("fps", "name fpsCode")
+      .populate("items.commodity", "name commodityName commodityCode")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: challans.length,
+      challans,
+    });
+  } catch (error) {
+    console.error("Get challans error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch delivery challans",
+    });
+  }
+};
+
+
 // 1. Create draft challan. Stock is NOT deducted here.
 const createChallan = async (req, res) => {
   try {
-    const { godown, fps, items, notes } = req.body;
+    const { fps, items, notes } = req.body;
+
+const godown =
+  req.user.role === "admin"
+    ? req.body.godown
+    : req.user.assignedGodown;
     
     if (notes !== undefined && typeof notes !== "string") {
   return res.status(400).json({
@@ -862,6 +908,7 @@ if (req.user.role !== "admin") {
 
 
 module.exports = {
+  getChallans, // NEW
   createChallan,
   approveChallan,
   dispatchChallan,
