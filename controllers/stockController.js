@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 
 const StockBatch = require("../models/StockBatch");
 const StockMovement = require("../models/StockMovement");
+const DeliveryChallan = require("../models/DeliveryChallan");
 const Commodity = require("../models/Commodity");
 const Supplier = require("../models/Supplier");
 const Godown = require("../models/Godown");
@@ -553,9 +554,60 @@ const getStockBatchById = async (req, res) => {
       });
     }
 
+    const [movementHistory, challans] = await Promise.all([
+      StockMovement.find({ batch: batchId })
+        .populate("performedBy", "name email role")
+        .populate(
+          "challan",
+          "challanNumber status dispatchedAt deliveredAt"
+        )
+        .sort({ createdAt: -1 })
+        .lean(),
+
+      DeliveryChallan.find({
+        "items.allocations.batch": batchId,
+        status: { $in: ["dispatched", "delivered"] },
+      })
+        .populate("fps", "name fpsCode")
+        .populate("godown", "godownCode name")
+        .populate("items.commodity", "name commodityCode")
+        .sort({ dispatchedAt: -1, createdAt: -1 })
+        .lean(),
+    ]);
+
+    const allocationHistory = [];
+
+    for (const challan of challans) {
+      for (const item of challan.items) {
+        const matchingAllocations = item.allocations.filter(
+          (allocation) =>
+            String(allocation.batch) === String(batchId)
+        );
+
+        for (const allocation of matchingAllocations) {
+          allocationHistory.push({
+            challanId: challan._id,
+            challanNumber: challan.challanNumber,
+            challanStatus: challan.status,
+            fps: challan.fps,
+            godown: challan.godown,
+            commodity: item.commodity,
+            requestedQuantity: item.requestedQuantity,
+            allocatedQuantity: allocation.quantity,
+            unit: allocation.unit,
+            dispatchedAt: challan.dispatchedAt,
+            deliveredAt: challan.deliveredAt,
+            createdAt: challan.createdAt,
+          });
+        }
+      }
+    }
+
     return res.status(200).json({
       success: true,
       batch,
+      movementHistory,
+      allocationHistory,
     });
   } catch (error) {
     console.error("Get stock batch details error:", error);
